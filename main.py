@@ -7,6 +7,7 @@ from common.constant import *
 from common.helpers import email_validation, str_to_datetime
 from common.logger import LOG
 from module.extraction import EmailContentExtraction
+from module.editor import ExcelEditor
 
 class EmailScrap:
     def __init__(self) -> None:
@@ -24,6 +25,11 @@ class EmailScrap:
 
         self.path_result_image = os.path.join(path_result,'image')
 
+        if not os.path.isdir(os.path.join(path_result,'excel')):
+            os.mkdir(os.path.join(path_result,'excel'))
+
+        self.path_result_excel = os.path.join(path_result,'excel',f'{EXCEL_NAME}.xlsx')
+
     # Function to search for a key value pair
     def search(self, key, value):
         _, data = self.con.search(None, key, '"{}"'.format(value))
@@ -39,6 +45,8 @@ class EmailScrap:
 
     def process(self):
         email_extraction = EmailContentExtraction()
+        excel_editor = ExcelEditor(path=PATH_BASE_EXCEL)
+        
         # logging the user in
         self.con.login(MY_GMAIL, MY_APP_PASSWORD)
         
@@ -47,17 +55,23 @@ class EmailScrap:
         
         # fetching emails
         msgs = self.get_emails(self.search('FROM', 'hello@parkee.app'))
-
-        for msg in reversed(msgs):
-            mail = mailparser.parse_from_bytes(msg[0][1]) 
-            if self.end_dt > mail.date > self.start_dt:
-                LOG.info(mail.date)
-                word_to_exclude_after = '--- mail_boundary ---'
-                mail_body_clean = mail.body[mail.body.index(word_to_exclude_after)+len(word_to_exclude_after):]
-                if email_validation(mail_body_clean):
-                    imgkit.from_string(mail_body_clean,os.path.join(self.path_result_image,f'{mail.date.strftime("%m_%d_%Y-%H_%M_%S")}.jpg'), config=self.config)
-                email_extraction.add_data(mail_body_clean)
-        
+        count = 0
+        for msg in msgs:
+            if count < CURRENT_MAX_ROW:
+                mail = mailparser.parse_from_bytes(msg[0][1]) 
+                if self.end_dt > mail.date > self.start_dt:
+                    LOG.info(mail.date)
+                    word_to_exclude_after = '--- mail_boundary ---'
+                    mail_body_clean = mail.body[mail.body.index(word_to_exclude_after)+len(word_to_exclude_after):]
+                    if email_validation(mail_body_clean):
+                        imgkit.from_string(mail_body_clean,os.path.join(self.path_result_image,f'{mail.date.strftime("%m_%d_%Y-%H_%M_%S")}.jpg'), config=self.config)
+                    email_extraction.add_data(mail_body_clean)
+                    excel_editor.replace_value(email_extraction.result_extraction)
+                    count+=1
+                    LOG.info(email_extraction.result_extraction)
+            else :
+                LOG.info(f'EXCEED MAX ROW {email_extraction.result_extraction}')
+        excel_editor.save_workbook(self.path_result_excel)
         self.res = email_extraction.result_list
 
 if __name__ == '__main__':
