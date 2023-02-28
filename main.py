@@ -6,6 +6,7 @@ import os
 from common.constant import *
 from common.helpers import email_validation, str_to_datetime
 from common.logger import LOG
+from module.extraction import EmailContentExtraction
 
 class EmailScrap:
     def __init__(self) -> None:
@@ -37,6 +38,7 @@ class EmailScrap:
         return msgs
 
     def process(self):
+        email_extraction = EmailContentExtraction()
         # logging the user in
         self.con.login(MY_GMAIL, MY_APP_PASSWORD)
         
@@ -54,6 +56,9 @@ class EmailScrap:
                 mail_body_clean = mail.body[mail.body.index(word_to_exclude_after)+len(word_to_exclude_after):]
                 if email_validation(mail_body_clean):
                     imgkit.from_string(mail_body_clean,os.path.join(self.path_result_image,f'{mail.date.strftime("%m_%d_%Y-%H_%M_%S")}.jpg'), config=self.config)
+                email_extraction.add_data(mail_body_clean)
+        
+        self.res = email_extraction.result_list
 
 if __name__ == '__main__':
     EmailScrap().process()
