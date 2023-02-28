@@ -1,72 +1,59 @@
 # Importing libraries
-import imaplib, email
+import imaplib
 import mailparser
-from datetime import datetime
 import imgkit
 import os
-from constant import *
+from common.constant import *
+from common.helpers import email_validation, str_to_datetime
+from common.logger import LOG
 
-config = imgkit.config(wkhtmltoimage=WKHTMLTOIMAMGE_PATH)
+class EmailScrap:
+    def __init__(self) -> None:
+        self.config = imgkit.config(wkhtmltoimage=WKHTMLTOIMAMGE_PATH)
+        self.con = imaplib.IMAP4_SSL(IMAP_URL)
+        self.start_dt, self.end_dt = str_to_datetime(START_SCRAP, END_SCRAP)
 
-# Function to search for a key value pair
-def search(key, value, con : imaplib.IMAP4_SSL):
-    result, data = con.search(None, key, '"{}"'.format(value))
-    return data
- 
-# Function to get the list of emails under this label
-def get_emails(con : imaplib.IMAP4_SSL, result_bytes):
-    msgs = [] # all the email data are pushed inside an array
-    for num in result_bytes[0].split():
-        typ, data = con.fetch(num, '(RFC822)')
-        msgs.append(data)
-    return msgs
+        if not os.path.isdir(os.path.join(os.getcwd(),'result')):
+            os.mkdir(os.path.join(os.getcwd(),'result'))
 
-def email_validation(em : str) -> bool:
-    if 'Ticket' or 'ticket' in email:
-        return True
-    return False
+        path_result = os.path.join(os.getcwd(), 'result')
 
-def str_to_datetime(start : str, end:str) -> tuple[datetime,datetime]:
-    if end == 'now':
-        end = datetime.now()
-    else : 
-        end = datetime.strptime(start, r'%d_%m_%y')
-    start = datetime.strptime(start, r'%d_%m_%y')
-    return (start, end)
+        if not os.path.isdir(os.path.join(path_result,'image')):
+            os.mkdir(os.path.join(path_result,'image'))
 
-def start():
-    start_dt, end_dt = str_to_datetime(START_SCRAP, END_SCRAP)
+        self.path_result_image = os.path.join(path_result,'image')
 
-    if not os.path.isdir(os.path.join(os.getcwd(),'result')):
-        os.mkdir(os.path.join(os.getcwd(),'result'))
-
-    path_result = os.path.join(os.getcwd(), 'result')
-
-    if not os.path.isdir(os.path.join(path_result,'image')):
-        os.mkdir(os.path.join(path_result,'image'))
-
-    path_result_image = os.path.join(path_result,'image')
-
-    # this is done to make SSL connection with GMAIL
-    con = imaplib.IMAP4_SSL(IMAP_URL)
-
-    # logging the user in
-    con.login(MY_GMAIL, MY_APP_PASSWORD)
+    # Function to search for a key value pair
+    def search(self, key, value):
+        _, data = self.con.search(None, key, '"{}"'.format(value))
+        return data
     
-    # calling function to check for email under this label
-    con.select('Inbox')
-    
-    # fetching emails from this user "tu**h*****1@gmail.com"
-    msgs = get_emails(con, search('FROM', 'hello@parkee.app', con))
+    # Function to get the list of emails under this label
+    def get_emails(self, result_bytes):
+        msgs = [] # all the email data are pushed inside an array
+        for num in result_bytes[0].split():
+            _, data = self.con.fetch(num, '(RFC822)')
+            msgs.append(data)
+        return msgs
 
-    for msg in reversed(msgs):
-        mail = mailparser.parse_from_bytes(msg[0][1]) 
-        if end_dt > mail.date > start_dt:
-            print(mail.date)
-            word_to_exclude_after = '--- mail_boundary ---'
-            mail_body_clean = mail.body[mail.body.index(word_to_exclude_after)+len(word_to_exclude_after):]
-            if email_validation(mail_body_clean):
-                imgkit.from_string(mail_body_clean,os.path.join(path_result_image,f'{mail.date.strftime("%m_%d_%Y-%H_%M_%S")}.jpg'), config=config)
+    def process(self):
+        # logging the user in
+        self.con.login(MY_GMAIL, MY_APP_PASSWORD)
+        
+        # calling function to check for email under this label
+        self.con.select('Inbox')
+        
+        # fetching emails
+        msgs = self.get_emails(self.search('FROM', 'hello@parkee.app'))
+
+        for msg in reversed(msgs):
+            mail = mailparser.parse_from_bytes(msg[0][1]) 
+            if self.end_dt > mail.date > self.start_dt:
+                LOG.info(mail.date)
+                word_to_exclude_after = '--- mail_boundary ---'
+                mail_body_clean = mail.body[mail.body.index(word_to_exclude_after)+len(word_to_exclude_after):]
+                if email_validation(mail_body_clean):
+                    imgkit.from_string(mail_body_clean,os.path.join(self.path_result_image,f'{mail.date.strftime("%m_%d_%Y-%H_%M_%S")}.jpg'), config=self.config)
 
 if __name__ == '__main__':
-    start()
+    EmailScrap().process()
