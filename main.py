@@ -65,10 +65,12 @@ class EmailScrap:
                     mail_body_clean = mail.body[mail.body.index(word_to_exclude_after)+len(word_to_exclude_after):]
                     if email_validation(mail_body_clean):
                         imgkit.from_string(mail_body_clean,os.path.join(self.path_result_image,f'{mail.date.strftime("%m_%d_%Y-%H_%M_%S")}.jpg'), config=self.config)
-                    email_extraction.add_data(mail_body_clean)
-                    excel_editor.replace_value(email_extraction.result_extraction)
-                    count+=1
-                    LOG.info(email_extraction.result_extraction)
+                        email_extraction.add_data(mail_body_clean)
+                        excel_editor.replace_value(email_extraction.result_extraction)
+                        LOG.info(email_extraction.result_extraction)
+                        count+=1
+                    else:
+                        LOG.info(f'different format')
             else :
                 LOG.info(f'EXCEED MAX ROW {email_extraction.result_extraction}')
         excel_editor.save_workbook(self.path_result_excel)
