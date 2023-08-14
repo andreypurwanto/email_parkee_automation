@@ -11,7 +11,8 @@ from module.editor import ExcelEditor
 
 class EmailScrap:
     def __init__(self) -> None:
-        self.config = imgkit.config(wkhtmltoimage=WKHTMLTOIMAMGE_PATH)
+        # self.config = imgkit.config(wkhtmltoimage=WKHTMLTOIMAMGE_PATH)
+        self.config = imgkit.config()
         self.con = imaplib.IMAP4_SSL(IMAP_URL)
         self.start_dt, self.end_dt = str_to_datetime(START_SCRAP, END_SCRAP)
 
