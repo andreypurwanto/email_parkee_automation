@@ -42,4 +42,4 @@ ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH="${WORK_DIRECTORY}:$PYTHONPATH"
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["python3"]
+# CMD ["python3"]

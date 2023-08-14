@@ -1,11 +1,14 @@
 from datetime import datetime
+from common.logger import LOG
 
 def email_validation(em : str) -> bool:
-        if ('Ticket' in em) or ('ticket' in em):
-            return True
-        return False
+    LOG.info('email_validation')
+    if ('Ticket' in em) or ('ticket' in em):
+        return True
+    return False
 
-def str_to_datetime(start : str, end:str) -> tuple[datetime,datetime]:
+def str_to_datetime(start : str, end:str):
+    LOG.info('str_to_datetime')
     if end == 'now':
         end = datetime.now()
     else : 

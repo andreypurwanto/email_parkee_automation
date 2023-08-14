@@ -78,4 +78,5 @@ class EmailScrap:
         self.res = email_extraction.result_list
 
 if __name__ == '__main__':
+    LOG.info('start')
     EmailScrap().process()
