@@ -32,7 +32,7 @@ RUN apt-get update -y && apt-get upgrade -y \
     && apt-get clean 
     # && apt-get install -y wkhtmltopdf 
 
-RUN apt -y install ./static/wkhtmltox_0.12.6-1.buster_amd64.deb
+RUN apt -y install ./wkhtmltox_installer/wkhtmltox_0.12.6-1.buster_amd64.deb
 
 # USER $APP_USER
 
