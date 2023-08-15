@@ -27,3 +27,10 @@ NAME = 'Andrey Purwanto'
 EXCEL_NAME_IDENTIFIER = NAME.replace(' ','')
 EXCEL_BASE_NAME = 'FinAccel_Expense_Claim'
 EXCEL_NAME = f'{EXCEL_BASE_NAME}_{EXCEL_NAME_IDENTIFIER}'
+
+BOT_SENDER_EMAIL = os.getenv('BOT_SENDER_EMAIL')
+BOT_SENDER_PASSWORD = os.getenv('BOT_SENDER_PASSWORD')
+
+DEFAULT_SUBJECT = "Your Parkee Extraction"
+DEFAULT_BODY_SUCCESS = "Success"
+DEFAULT_BODY_ERROR = "There is an error for your extraction, please make sure you already use App Password. If Issue persist, contact administrator."
