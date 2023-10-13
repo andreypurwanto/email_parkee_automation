@@ -21,6 +21,7 @@ from common.logger import LOG
 from module.extraction import EmailContentExtraction
 from module.editor import ExcelEditor
 import shutil
+import img2pdf
 
 class EmailScrap:
     def __init__(self) -> None:
@@ -42,6 +43,7 @@ class EmailScrap:
         self.path_result_image = os.path.join(path_result,'receipt')
         self.path_result_excel = os.path.join(path_result,f'{EXCEL_NAME}.xlsx')
         self.path_result_image_zip = os.path.join(path_result,f'{self.receipt_name}.zip')
+        self.list_img_file = []
 
     # Function to search for a key value pair
     def search(self, key, value):
@@ -81,7 +83,9 @@ class EmailScrap:
                         word_to_exclude_after = '--- mail_boundary ---'
                         mail_body_clean = mail.body[mail.body.index(word_to_exclude_after)+len(word_to_exclude_after):]
                         if email_validation(mail_body_clean):
-                            imgkit.from_string(mail_body_clean,os.path.join(self.path_result_image,f'{mail.date.strftime("%m_%d_%Y-%H_%M_%S")}.jpg'), config=self.config)
+                            path_img_file = os.path.join(self.path_result_image,f'{mail.date.strftime("%m_%d_%Y-%H_%M_%S")}.jpg')
+                            imgkit.from_string(mail_body_clean,path_img_file, config=self.config)
+                            self.list_img_file.append(path_img_file)
                             email_extraction.add_data(mail_body_clean)
                             excel_editor.replace_value(email_extraction.result_extraction)
                             LOG.info(email_extraction.result_extraction)
@@ -94,8 +98,19 @@ class EmailScrap:
 
             excel_editor.save_workbook(self.path_result_excel)
             self.res = email_extraction.result_list
+
+            # zip
             shutil.make_archive(os.path.join('result',self.receipt_name), 'zip', self.path_result_image)
-            send_email(DEFAULT_SUBJECT, DEFAULT_BODY_SUCCESS,[MY_GMAIL],[self.path_result_excel, self.path_result_image_zip])
+            
+            # pdf
+            # Convert the list of JPEG images to a single PDF file
+            pdf_data = img2pdf.convert(self.list_img_file)
+
+            # Write the PDF content to a file (make sure you have write permissions for the specified file)
+            with open(os.path.join('result',"receipts.pdf"), "wb") as file:
+                file.write(pdf_data)
+
+            send_email(DEFAULT_SUBJECT, DEFAULT_BODY_SUCCESS,[MY_GMAIL],[self.path_result_excel, self.path_result_image_zip, os.path.join('result',"receipts.pdf")])
         except Exception as e:
             LOG.error(e, exc_info=True)
             send_email(DEFAULT_SUBJECT, DEFAULT_BODY_ERROR,[MY_GMAIL],None)

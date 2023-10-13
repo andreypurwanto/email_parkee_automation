@@ -6,7 +6,7 @@ load_dotenv()
 MY_GMAIL = os.getenv('MY_GMAIL')
 MY_APP_PASSWORD = os.getenv('MY_APP_PASSWORD')
 IMAP_URL = 'imap.gmail.com'
-START_SCRAP = '01_06_23' # DD_MM_YY
+START_SCRAP = '13_07_23' # DD_MM_YY
 END_SCRAP = 'now'
 WKHTMLTOIMAMGE_PATH = os.path.join(os.getcwd(),'wkhtmltox','bin','wkhtmltoimage.exe')
 CURRENT_MAX_ROW = 27
